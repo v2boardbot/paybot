@@ -74,8 +74,13 @@ class Pay:
         params = (
             ('act', 'do'),
         )
+        money = self.query_money()
+        try:
+            money = int(money)
+        except:
+            return f'余额取整数失败，{money}'
         data = {
-            'money': str(self.query_money()),
+            'money': str(money),
             'submit': '\u7533\u8BF7\u63D0\u73B0'
         }
         self.headers['referer'] = f'{self._api}/user/apply.php'
