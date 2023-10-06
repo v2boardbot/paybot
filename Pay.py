@@ -33,7 +33,7 @@ class Pay:
         obj = res.json()
         if obj['code'] == 0:
             # return f'查询结果:{obj["money"]} 元'
-            return obj['order_today']['all']
+            return obj['order_today']['all'] - obj['settle_money']
         elif obj['code'] == -3:
             result = self.login()
             if result is True:
