@@ -22,7 +22,7 @@ class Pay:
         res = self.session.request(method, url, verify=False, headers=self.headers, **kwargs)
         return res
 
-    def query_money(self) -> Union[float, str]:
+    def query_money(self) -> Union[dict, str]:
         """
         查询账户余额，查询成功返回float，否则返回错误文本
         :return: float | str
@@ -33,7 +33,12 @@ class Pay:
         obj = res.json()
         if obj['code'] == 0:
             # return f'查询结果:{obj["money"]} 元'
-            return obj['order_today']['all'] - obj['settle_money']
+            data = {
+                "all": obj['order_today']['all'],
+                "settle_money": obj['settle_money'],
+                "money": round(obj['order_today']['all'] - obj['settle_money'], 2)
+            }
+            return data
         elif obj['code'] == -3:
             result = self.login()
             if result is True:
@@ -74,11 +79,15 @@ class Pay:
         params = (
             ('act', 'do'),
         )
-        money = self.query_money()
-        try:
-            money = int(money)
-        except:
-            return f'余额取整数失败，{money}'
+        data = self.query_money()
+        if isinstance(data, dict):
+            money = data.get('money')
+            try:
+                money = int(money)
+            except:
+                return f'余额取整数失败，{money}'
+        else:
+            return f'获取余额错误，{data}'
         data = {
             'money': str(money),
             'submit': '\u7533\u8BF7\u63D0\u73B0'
