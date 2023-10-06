@@ -1,0 +1,10 @@
+bot:
+  chat_id: 提现通知聊天ID
+  token: 机器人Token
+  proxy:
+pay:
+  auto: off
+  key: 商户密钥
+  pid: 商户ID，记得开启密钥登录
+  time: '23:00:00'
+  url: 易支付接口地址，后面不需要/
