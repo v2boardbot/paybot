@@ -6,13 +6,16 @@ from datetime import datetime
 
 
 async def info(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    data = pay.query_info()
+    info = pay.query_info()
+    money = pay.query_money()
     text = ''
-    if isinstance(data, dict):
-        for k, v in data.items():
+    if isinstance(info, dict):
+        if isinstance(money, dict):
+            info.update(money)
+        for k, v in info.items():
             text += f'{k}: {v}\n'
     else:
-        text = data
+        text = info
     await update.message.reply_text(text=text)
 
 async def money(update: Update, context: ContextTypes.DEFAULT_TYPE):

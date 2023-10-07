@@ -102,7 +102,7 @@ class Pay:
         if isinstance(data, dict):
             money = data.get('可提现余额')
             try:
-                money = int(money)
+                money = int(float(money))
             except:
                 return f'余额取整数失败，{money}'
         else:
