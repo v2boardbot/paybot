@@ -22,7 +22,7 @@ class Pay:
         res = self.session.request(method, url, verify=False, headers=self.headers, **kwargs)
         return res
 
-    def query_money(self) -> Union[dict, str]:
+    def query_info(self) -> Union[dict, str]:
         """
         查询账户余额，查询成功返回float，否则返回错误文本
         :return: float | str
@@ -34,21 +34,40 @@ class Pay:
         if obj['code'] == 0:
             # return f'查询结果:{obj["money"]} 元'
             data = {
-                "all": obj['order_today']['all'],
-                "settle_money": obj['settle_money'],
-                "money": round(obj['order_today']['all'] - obj['settle_money'], 2)
+                "今日收入": obj['order_today']['all'],
+                "已结算余额": obj['settle_money'],
+                "昨日收入": obj['order_lastday']['all'],
+                "订单总数": obj['orders'],
+                "今日订单": obj['orders_today']
             }
             return data
         elif obj['code'] == -3:
             result = self.login()
             if result is True:
-                return self.query_money()
+                return self.query_info()
             else:
                 return result
         else:
             return res.text
 
+    def query_money(self) -> Union[dict, str]:
+        url = f'{self._api}/user/apply.php'
+        res = self._request('get', url)
+        if res.text.find('./login.php') != -1:
+            result = self.login()
+            if result is True:
+                return self.query_money()
+            else:
+                return result
+        tree = etree.HTML(res.text)
+        data = {
+            '当前余额': ''.join(tree.xpath('//*[@id="content"]/div/div[2]/div/div[2]/form/div[4]/div/input/@value')),
+            '可提现余额': ''.join(tree.xpath('//input[@name="tmoney"]/@value')),
+        }
+        return data
+
     def login(self):
+        self.session = requests.Session()
         self._request('get', self._api)
         self.headers['referer'] = f'{self._api}/user/login.php'
         params = (
@@ -81,7 +100,7 @@ class Pay:
         )
         data = self.query_money()
         if isinstance(data, dict):
-            money = data.get('money')
+            money = data.get('可提现余额')
             try:
                 money = int(money)
             except:
@@ -97,7 +116,7 @@ class Pay:
         response = self._request('post', url, params=params, data=data)
         result = re.findall("alert\('(.*?)'\)", response.text)
         if result:
-            return ''.join(result)
+            return ''.join(result) + f'\n提现金额:{money}'
         else:
             return response.text
 

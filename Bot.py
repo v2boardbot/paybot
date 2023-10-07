@@ -1,9 +1,10 @@
 from telegram.ext import CommandHandler, Application, ContextTypes
-from commands import money, cash_out, on, off
+from commands import info, cash_out, on, off, money
 import os
-from datetime import datetime
+from datetime import datetime, time
 from Pay import pay
 from utils import read_config
+import pytz
 
 config = read_config()
 print('配置:', config, '\n')
@@ -15,6 +16,7 @@ if proxy:
     os.environ['HTTPS_PROXY'] = proxy
 
 CommandList = [
+    CommandHandler("info", info),
     CommandHandler("money", money),
     CommandHandler("cash_out", cash_out),
     CommandHandler("on", on),
@@ -25,6 +27,7 @@ CommandList = [
 async def set_commands(context: ContextTypes.DEFAULT_TYPE):
     await context.bot.set_my_commands(commands=[
         ("money", "查看余额"),
+        ("info", "查看收入详细"),
         ("cash_out", "提现"),
         ("on", "开启自动提现"),
         ("off", "关闭自动提现"),
@@ -40,7 +43,8 @@ if __name__ == '__main__':
     application = Application.builder().token(bot_config.get('token')).build()
     job_queue = application.job_queue
     job_queue.run_once(set_commands, 2)
-    run_time = datetime.strptime(config.get('pay').get('time'), "%H:%M:%S").time()
+    ctc_time = datetime.strptime(config.get('pay').get('time'), "%H:%M:%S").time()
+    run_time = time(hour=ctc_time.hour, minute=ctc_time.minute, second=ctc_time.second, tzinfo=pytz.timezone('Asia/Shanghai'))
     print('自动提现时间:', run_time)
     print('自动提现开关:', config.get('pay').get('auto') == 'on')
     job_queue.run_daily(callback=auto_cash_out, time=run_time)
